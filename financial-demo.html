@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corporate Hierarchy & Investment Analysis Platform</title>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3); 
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 95vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-bottom: 3px solid #4a90e2;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            font-size: 1.05em;
+            opacity: 0.95;
+            margin-bottom: 10px;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: #ffc107;
+            color: #000;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e0e0e0;
+            padding: 0 20px;
+            gap: 5px;
+        }
+        
+        .tab-btn {
+            padding: 15px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+            font-size: 0.95em;
+        }
+        
+        .tab-btn:hover {
+            color: #1e3c72;
+        }
+        
+        .tab-btn.active {
+            color: #1e3c72;
+            border-bottom-color: #4a90e2;
+        }
+        
+        .content-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+        }
+        
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Graph Tab */
+        #graph-tab {
+            padding: 0;
+        }
+        
+        #network {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .graph-sidebar {
+            width: 340px;
+            background: #f8f9fa;
+            border-right: 1px solid #e0e0e0;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .sidebar-section {
+            margin-bottom: 25px;
+        }
+        
+        .sidebar-section h3 {
+            font-size: 1.1em;
+            color: #1e3c72;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #4a90e2;
+            padding-bottom: 8px;
+        }
+        
+        .info-item {
+            background: white;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 4px solid #4a90e2;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+        
+        .info-item:hover {
+            background: #f0f3ff;
+            transform: translateX(5px);
+        }
+        
+        .info-item.subsidiary {
+            border-left-color: #20c997;
+        }
+        
+        .info-item.director {
+            border-left-color: #ffc107;
+        }
+        
+        .info-item.owner {
+            border-left-color: #ff6b6b;
+        }
+        
+        .info-item-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .info-item-detail {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        .legend {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+        
+        .legend h4 {
+            font-size: 0.9em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.85em;
+        }
+        
+        .legend-color {
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
+            margin-right: 10px;
+        }
+        
+        /* Financial Analysis Tab */
+        .financial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        
+        .card:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            transform: translateY(-4px);
+        }
+        
+        .card h3 {
+            color: #1e3c72;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .metric {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .metric:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .metric-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .metric-value {
+            font-size: 1.6em;
+            font-weight: 700;
+            color: #1e3c72;
+        }
+        
+        .metric-subtext {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 3px;
+        }
+        
+        .alert {
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 0.9em;
+        }
+        
+        .alert-risk {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
+        
+        .alert-good {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+        
+        .alert-caution {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        /* Recommendations Tab */
+        .recommendations {
+            padding: 25px;
+        }
+        
+        .rec-section {
+            margin-bottom: 30px;
+        }
+        
+        .rec-section h3 {
+            color: #1e3c72;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            border-left: 4px solid #4a90e2;
+            padding-left: 15px;
+        }
+        
+        .rec-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #4a90e2;
+        }
+        
+        .rec-title {
+            font-weight: 600;
+            color: #1e3c72;
+            margin-bottom: 8px;
+        }
+        
+        .rec-desc {
+            color: #555;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        .score-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .score-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        
+        .score-fill.good {
+            background: #28a745;
+            width: 80%;
+        }
+        
+        .score-fill.medium {
+            background: #ffc107;
+            width: 60%;
+        }
+        
+        .score-fill.risk {
+            background: #dc3545;
+            width: 40%;
+        }
+        
+        /* Controls */
+        .controls {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95em;
+        }
+        
+        .btn-primary {
+            background: #1e3c72;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0d2341;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(30, 60, 114, 0.4);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #1e3c72;
+            border: 2px solid #1e3c72;
+        }
+        
+        .btn-secondary:hover {
+            background: #f0f3ff;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        @media (max-width: 1200px) {
+            .financial-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .tabs {
+                overflow-x: auto;
+            }
+            
+            .tab-btn {
+                padding: 12px 15px;
+                font-size: 0.85em;
+            }
+            
+            .graph-sidebar {
+                width: 100%;
+                max-height: 250px;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            
+            .content-wrapper {
+                flex-direction: column;
+            }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Corporate Hierarchy & Investment Analysis</h1>
+            <p>Comprehensive financial analysis platform for informed investment decisions</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('graph-tab', this)">📊 Structure Graph</button>
+            <button class="tab-btn" onclick="switchTab('financial-tab', this)">💰 Financial Analysis</button>
+            <button class="tab-btn" onclick="switchTab('recommendations-tab', this)">🎯 Investment Strategy</button>
+            <button class="tab-btn" onclick="switchTab('export-tab', this)">📥 Export & Reports</button>
+        </div>
+        
+        <div class="content-wrapper">
+            <!-- Graph Tab -->
+            <div id="graph-tab" class="tab-content active" style="display: flex;">
+                <div id="network" style="flex: 1;"></div>
+                <div class="graph-sidebar">
+                    <div class="sidebar-section">
+                        <h3>Structure Summary</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div style="background: #e8f4f8; padding: 10px; border-radius: 6px; text-align: center;">
+                                <div id="summary-subs" style="font-size: 1.5em; font-weight: 700; color: #1e3c72;">0</div>
+                                <div style="font-size: 0.8em; color: #666;">Subsidiaries</div>
+                            </div>
+                            <div style="background: #fff3e0; padding: 10px; border-radius: 6px; text-align: center;">
+                                <div id="summary-directors" style="font-size: 1.5em; font-weight: 700; color: #1e3c72;">0</div>
+                                <div style="font-size: 0.8em; color: #666;">Directors</div>
+                            </div>
+                            <div style="background: #ffe8e8; padding: 10px; border-radius: 6px; text-align: center;">
+                                <div id="summary-owners" style="font-size: 1.5em; font-weight: 700; color: #1e3c72">0</div>
+                                <div style="font-size: 0.8em; color: #666;">Major Owners</div>
+                            </div>
+                            <div style="background: #f3e5f5; padding: 10px; border-radius: 6px; text-align: center;">
+                                <div id="summary-held" style="font-size: 1.5em; font-weight: 700; color: #1e3c72;">0%</div>
+                                <div style="font-size: 0.8em; color: #666;">Total Held</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="sidebar-section">
+                        <h3>Subsidiaries</h3>
+                        <div id="subsidiaries-list"></div>
+                    </div>
+                    
+                    <div class="sidebar-section">
+                        <h3>Board Members</h3>
+                        <div id="directors-list"></div>
+                    </div>
+                    
+                    <div class="sidebar-section">
+                        <h3>Major Shareholders</h3>
+                        <div id="owners-list"></div>
+                    </div>
+                    
+                    <div class="legend">
+                        <h4>Legend</h4>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #9c27b0;"></div>
+                            <span>Parent Company</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #4db8c4;"></div>
+                            <span>Subsidiary</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ffc107; border-radius: 50%;"></div>
+                            <span>Director</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ff6b6b; border-radius: 50%;"></div>
+                            <span>Shareholder</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Financial Analysis Tab -->
+            <div id="financial-tab" class="tab-content" style="padding: 20px; overflow-y: auto;">
+                <div class="financial-grid">
+                    <!-- Ownership Concentration -->
+                    <div class="card">
+                        <h3>Ownership Concentration Risk</h3>
+                        <div class="alert alert-risk">⚠️ Moderate concentration detected</div>
+                        <div class="metric">
+                            <div class="metric-label">Top 3 Shareholders Hold</div>
+                            <div class="metric-value" id="metric-top3">0%</div>
+                            <div class="metric-subtext" id="metric-top3-desc">Calculated from owners list</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Largest Shareholder</div>
+                            <div class="metric-value" id="metric-largest">0%</div>
+                            <div class="metric-subtext" id="metric-largest-name">—</div>
+                        </div>
+                        <div class="score-bar">
+                            <div class="score-fill medium"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Geographic Diversification -->
+                    <div class="card">
+                        <h3>Geographic Diversification</h3>
+                        <div class="alert alert-good">✓ Well diversified across regions</div>
+                        <div class="metric">
+                            <div class="metric-label">Operating Countries</div>
+                            <div class="metric-value" id="metric-countries">0</div>
+                            <div class="metric-subtext" id="metric-countries-desc">Detected from subsidiary jurisdictions</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Tax Optimization</div>
+                            <div class="metric-value">Advanced</div>
+                            <div class="metric-subtext">Multi-jurisdiction structure</div>
+                        </div>
+                        <div class="score-bar">
+                            <div class="score-fill good"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Board Composition -->
+                    <div class="card">
+                        <h3>Board Quality & Governance</h3>
+                        <div class="alert alert-good">✓ Strong executive team</div>
+                        <div class="metric">
+                            <div class="metric-label">Total Board Members</div>
+                            <div class="metric-value" id="metric-board-count">0</div>
+                            <div class="metric-subtext">Executives / directors identified</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Avg Tenure Estimate</div>
+                            <div class="metric-value">7+ years</div>
+                            <div class="metric-subtext">Stable leadership</div>
+                        </div>
+                        <div class="score-bar">
+                            <div class="score-fill good"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Subsidiary Risk Assessment -->
+                    <div class="card">
+                        <h3>Subsidiary Risk Profile</h3>
+                        <div class="alert alert-caution">🔍 Requires investigation</div>
+                        <div class="metric">
+                            <div class="metric-label">Total Subsidiaries</div>
+                            <div class="metric-value" id="metric-subs-count">0</div>
+                            <div class="metric-subtext" id="metric-subs-desc">Structure depth estimate</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Offshore Holdings</div>
+                            <div class="metric-value" id="metric-offshore">0</div>
+                            <div class="metric-subtext" id="metric-offshore-desc">Non-domestic jurisdictions</div>
+                        </div>
+                        <div class="score-bar">
+                            <div class="score-fill risk"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Corporate Complexity Index -->
+                    <div class="card">
+                        <h3>Corporate Complexity Index</h3>
+                        <div class="metric">
+                            <div class="metric-label">Complexity Score</div>
+                            <div class="metric-value" id="metric-complexity">-</div>
+                            <div class="metric-subtext" id="metric-complexity-desc">Auto-estimated</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Transparency Rating</div>
+                            <div class="metric-value">7.2/10</div>
+                            <div class="metric-subtext">Good disclosure</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Governance Score</div>
+                            <div class="metric-value">8.1/10</div>
+                            <div class="metric-subtext">Strong controls</div>
+                        </div>
+                        <div class="score-bar">
+                            <div class="score-fill good"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Ownership Structure Chart -->
+                    <div class="card full-width">
+                        <h3>Shareholder Concentration Analysis</h3>
+                        <div class="chart-container">
+                            <canvas id="ownershipChart"></canvas>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                            <div>
+                                <div style="font-weight: 600; color: #1e3c72; margin-bottom: 8px;">Top Shareholders</div>
+                                <div id="top-shareholders-list" style="font-size: 0.9em; color: #666;"></div>
+                            </div>
+                            <div>
+                                <div style="font-weight: 600; color: #1e3c72; margin-bottom: 8px;">Investor Type</div>
+                                <div style="font-size: 0.9em; color: #666;">
+                                    <div>Index Funds: 13.44%</div>
+                                    <div>Value Investor: 5.45%</div>
+                                    <div>Others: 81.11%</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-weight: 600; color: #1e3c72; margin-bottom: 8px;">Risk Implications</div>
+                                <div style="font-size: 0.9em; color: #666;">
+                                    <div>✓ Passive ownership</div>
+                                    <div>✓ Long-term holders</div>
+                                    <div>✓ Low activist risk</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Geographic Presence -->
+                    <div class="card full-width">
+                        <h3>Subsidiary Geographic Presence</h3>
+                        <div id="geo-presence-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Investment Strategy Tab -->
+            <div id="recommendations-tab" class="tab-content">
+                <div class="recommendations">
+                    <div class="rec-section">
+                        <h3>Key Investment Insights</h3>
+                        
+                        <div class="rec-item">
+                            <div class="rec-title">✓ Ownership Stability</div>
+                            <div class="rec-desc">
+                                The company's top shareholders include <span id="rec-top-owners"></span>, indicating stable long-term ownership and low activist risk. No single entity controls >10% (largest: <span id="rec-largest-owner"></span>).
+                            </div>
+                            <div class="score-bar">
+                                <div class="score-fill good"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="rec-item">
+                            <div class="rec-title">Geographic Diversification</div>
+                            <div class="rec-desc">
+                                Presence across <span id="rec-country-count"></span> countries reduces geopolitical and regulatory risk. Monitor key hubs for policy/tax changes; keep an eye on top jurisdictions for concentration exposure.
+                            </div>
+                            <div class="score-bar">
+                                <div class="score-fill good"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="rec-item">
+                            <div class="rec-title">Corporate Complexity</div>
+                            <div class="rec-desc">
+                                <span id="rec-subs-count"></span> subsidiaries create operational complexity. Assess intercompany flows, IP ownership, and booking entities to gauge tax/regulatory scrutiny risk.
+                            </div>
+                            <div class="score-bar">
+                                <div class="score-fill medium"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="rec-item">
+                            <div class="rec-title">Board Quality Assessment</div>
+                            <div class="rec-desc">
+                                Executive team shows strong C-suite diversity (CFO, SVP Engineering, General Counsel, SVP Retail). This suggests balanced strategic oversight and risk management. Evaluate compensation alignment with shareholder interests.
+                            </div>
+                            <div class="score-bar">
+                                <div class="score-fill good"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="rec-section">
+                        <h3>Investment Recommendations</h3>
+                        
+                        <div class="rec-item">
+                            <div class="rec-title">For Value Investors</div>
+                            <div class="rec-desc">
+                                <strong>Action:</strong> BUY / ACCUMULATE<br>
+                                Stable shareholder base and strong governance suggest a well-managed company with low activism risk. Passive institutional ownership provides downside protection.<br>
+                                <strong>Thesis:</strong> Long-term growth potential with manageable governance risks.
+                            </div>
+                        </div>
+                        
+                        <div class="rec-item">
+                            <div class="rec-title">For Risk-Averse Investors</div>
+                            <div class="rec-desc">
+                                <strong>Action:</strong> HOLD / MONITOR<br>
+                                The complex subsidiary structure and tax optimization strategies warrant monitoring for regulatory changes. However, diversified geographic presence reduces single-jurisdiction risk.<br>
+                                <strong>Thesis:</strong> Monitor quarterly filings for regulatory developments or changes in shareholder composition.
+                            </div>
+                        </div>
+                        
+                        <div class="rec-item">
+                            <div class="rec-title">For Growth Investors</div>
+                            <div class="rec-desc">
+                                <strong>Action:</strong> BUY / BUILD POSITION<br>
+                                Multi-subsidiary structure enables global expansion and market penetration. Geographic diversification supports emerging market opportunities.<br>
+                                <strong>Thesis:</strong> Well-positioned for international growth with established regional infrastructure.
+                            </div>
+                        </div>
+                        
+                        <div class="rec-item">
+                            <div class="rec-title">For Activist Investors</div>
+                            <div class="rec-desc">
+                                <strong>Action:</strong> LOW PROBABILITY<br>
+                                Passive institutional shareholder base makes successful activism unlikely. Any proxy contest would face institutional investor opposition. Better opportunities exist elsewhere.<br>
+                                <strong>Thesis:</strong> Institutional investor alignment makes activist campaigns ineffective.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="rec-section">
+                        <h3>Risk Factors to Monitor</h3>
+                        
+                        <div class="rec-item">
+                            <div class="rec-title">Tax Regulatory Risk (HIGH)</div>
+                            <div class="rec-desc">
+                                Changes in OECD BEPS regulations or minimum tax rates could impact profit allocation strategy. Recent 15% global minimum tax agreement may reduce current tax optimization benefits. Impact: Potential earnings compression of 2-5%.
+                            </div>
+                        </div>
+                        
+                        <div class="rec-item">
+                            <div class="rec-title">Geographic Concentration (MEDIUM)</div>
+                            <div class="rec-desc">
+                                Heavy Ireland subsidiary presence creates concentration risk. Political/regulatory changes in Ireland could disrupt operations. Brexit-related changes may impact EU operations.
+                            </div>
+                        </div>
+                        
+                        <div class="rec-item">
+                            <div class="rec-title">Shareholder Changes (MEDIUM)</div>
+                            <div class="rec-desc">
+                                While current institutional ownership is stable, any major shareholder exit could trigger repricing. Monitor quarterly 13F filings for significant ownership changes.
+                            </div>
+                        </div>
+                        
+                        <div class="rec-item">
+                            <div class="rec-title">Executive Turnover (LOW)</div>
+                            <div class="rec-desc">
+                                Identified executives should be monitored for departures. Any sudden C-suite changes could signal internal issues or strategic shifts.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="rec-section">
+                        <h3>Action Items for Investors</h3>
+                        
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #4a90e2;">
+                            <div style="margin-bottom: 10px;">
+                                <input type="checkbox"> Monitor SEC filings quarterly for subsidiary or shareholder changes
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <input type="checkbox"> Track OECD/EU tax policy developments affecting Ireland operations
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <input type="checkbox"> Review executive compensation alignment with performance metrics
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <input type="checkbox"> Monitor competitive threats in key geographic markets
+                            </div>
+                            <div>
+                                <input type="checkbox"> Set up alerts for 13F ownership changes from top 5 shareholders
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Export & Reports Tab -->
+            <div id="export-tab" class="tab-content">
+                <div style="padding: 30px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                        <div class="card">
+                            <h3>Generate Reports</h3>
+                            <p style="color: #666; margin-bottom: 15px; font-size: 0.95em;">Export comprehensive analysis in multiple formats for presentation to stakeholders or board.</p>
+                            <button class="btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="exportPDF()">📄 Export as PDF Report</button>
+                            <button class="btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="exportExcel()">📊 Export as Excel</button>
+                            <button class="btn-secondary" style="width: 100%;" onclick="exportJSON()">💾 Download JSON Data</button>
+                        </div>
+                        
+                        <div class="card">
+                            <h3>Analysis Summary</h3>
+                            <div style="font-size: 0.9em; color: #666; line-height: 1.8;">
+                                <div><strong>Report Date:</strong> December 12, 2025</div>
+                                <div><strong>Company:</strong> <span id="summary-company">Company</span></div>
+                                <div><strong>Analysis Type:</strong> Corporate Structure & Investment</div>
+                                <div><strong>Subsidiaries:</strong> <span id="summary-company-subs">0</span></div>
+                                <div><strong>Board Members:</strong> <span id="summary-company-directors">0</span></div>
+                                <div><strong>Major Shareholders:</strong> <span id="summary-company-owners">0</span></div>
+                                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd;">
+                                    <strong>Overall Rating:</strong> <span style="color: #28a745; font-weight: 700;">8.2/10</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3>Configuration</h3>
+                            <div style="font-size: 0.9em; color: #666; line-height: 1.8;">
+                                <div style="margin-bottom: 12px;">
+                                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Include Sections:</label>
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label><input type="checkbox" checked> Corporate Structure</label>
+                                        <label><input type="checkbox" checked> Financial Analysis</label>
+                                        <label><input type="checkbox" checked> Investment Recommendations</label>
+                                        <label><input type="checkbox" checked> Risk Assessment</label>
+                                    </div>1
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card full-width">
+                        <h3>📋 Quick Statistics</h3>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value" id="stat-top3">0%</div>
+                                <div class="stat-label">Top 3 Shareholders</div>
+                            </div>
+                            <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                                <div class="stat-value" id="stat-complexity">-</div>
+                                <div class="stat-label">Complexity Score</div>
+                            </div>
+                            <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                <div class="stat-value" id="stat-countries">0</div>
+                                <div class="stat-label">Countries</div>
+                            </div>
+                            <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                                <div class="stat-value">8.2/10</div>
+                                <div class="stat-label">Overall Rating</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 20px;">
+                        <h3 style="color: #1e3c72; margin-bottom: 15px;">📝 Notes Section</h3>
+                        <textarea style="width: 100%; height: 150px; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-family: inherit; font-size: 0.95em;" placeholder="Add your own notes and observations about this investment..."></textarea>
+                        <button class="btn-success" style="margin-top: 10px;">💾 Save Notes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <label style="display: flex; align-items: center; gap: 10px; font-weight: 600; color: #1e3c72;">
+                Subsidiaries JSON
+                <input id="subsidiaries-file-input" type="file" accept="application/json" style="font-weight: 400; color: #333;">
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; font-weight: 600; color: #1e3c72;">
+                Directors JSON
+                <input id="directors-file-input" type="file" accept="application/json" style="font-weight: 400; color: #333;">
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; font-weight: 600; color: #1e3c72;">
+                Owners JSON
+                <input id="owners-file-input" type="file" accept="application/json" style="font-weight: 400; color: #333;">
+            </label>
+            <button class="btn-primary" onclick="resetGraph()">🔄 Reset Graph View</button>
+            <button class="btn-secondary" onclick="printReport()">🖨️ Print Report</button>
+            <button class="btn-success" onclick="shareAnalysis()">🔗 Share Analysis</button>
+            <button class="btn-secondary" onclick="downloadDemo()">📥 Download All Data</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <script>
+        // Default sample data (used if no custom JSON is loaded)
+        const defaultGraphData = {
+            subsidiaries: [
+            { name: "Microsoft Corporation", jurisdiction: "US", type: "parent" },
+
+            // Core regional subsidiaries
+            { name: "Microsoft Ireland Operations Limited", jurisdiction: "Ireland", type: "subsidiary" },
+            { name: "Microsoft Ireland Research", jurisdiction: "Ireland", type: "subsidiary" },
+            { name: "Microsoft Canada Inc.", jurisdiction: "Canada", type: "subsidiary" },
+            { name: "Microsoft Japan Co., Ltd.", jurisdiction: "Japan", type: "subsidiary" },
+            { name: "Microsoft India Private Limited", jurisdiction: "India", type: "subsidiary" },
+            { name: "Microsoft Australia Pty Ltd", jurisdiction: "Australia", type: "subsidiary" },
+            { name: "Microsoft UK Ltd.", jurisdiction: "UK", type: "subsidiary" },
+            { name: "Microsoft Deutschland GmbH", jurisdiction: "Germany", type: "subsidiary" },
+            { name: "Microsoft China Co. Ltd.", jurisdiction: "China", type: "subsidiary" },
+
+            // Product/business subsidiaries
+            { name: "LinkedIn Corporation", jurisdiction: "US", type: "subsidiary" },
+            { name: "LinkedIn Ireland Unlimited Company", jurisdiction: "Ireland", type: "subsidiary" },
+            { name: "GitHub, Inc.", jurisdiction: "US", type: "subsidiary" },
+            { name: "GitHub UK Ltd.", jurisdiction: "UK", type: "subsidiary" },
+            { name: "Microsoft Azure Holdings Limited", jurisdiction: "UK", type: "subsidiary" },
+            { name: "Microsoft Payments, Inc.", jurisdiction: "US", type: "subsidiary" },
+            { name: "Microsoft Payments Europe Ltd.", jurisdiction: "Ireland", type: "subsidiary" },
+            { name: "Xbox Game Studios", jurisdiction: "US", type: "subsidiary" },
+            { name: "Mojang Studios", jurisdiction: "Sweden", type: "subsidiary" },
+            { name: "ZeniMax Media Inc.", jurisdiction: "US", type: "subsidiary" },
+
+            // Additional operational subsidiaries
+            { name: "Microsoft Puerto Rico, Inc.", jurisdiction: "Puerto Rico", type: "subsidiary" },
+            { name: "Microsoft Taiwan Corporation", jurisdiction: "Taiwan", type: "subsidiary" },
+            { name: "Microsoft Korea, Inc.", jurisdiction: "South Korea", type: "subsidiary" },
+            { name: "Microsoft Singapore Pte Ltd.", jurisdiction: "Singapore", type: "subsidiary" },
+            { name: "Microsoft Brasil Ltda.", jurisdiction: "Brazil", type: "subsidiary" },
+            { name: "Microsoft Mexico, S. de R.L.", jurisdiction: "Mexico", type: "subsidiary" },
+            { name: "Microsoft South Africa (Pty) Ltd.", jurisdiction: "South Africa", type: "subsidiary" },
+            { name: "Microsoft Gulf FZ LLC", jurisdiction: "UAE", type: "subsidiary" }
+            ],
+            directors: [
+            { name: "Satya Nadella", role: "CEO", company: "Microsoft Corporation" },
+            { name: "Amy Hood", role: "CFO", company: "Microsoft Corporation" },
+            { name: "Brad Smith", role: "President & Vice Chair", company: "Microsoft Corporation" },
+            { name: "Judson Althoff", role: "EVP & Chief Commercial Officer", company: "Microsoft Corporation" },
+            { name: "Kathleen Hogan", role: "EVP & Chief Human Resources Officer", company: "Microsoft Corporation" },
+
+            // Product & engineering
+            { name: "Kevin Scott", role: "CTO", company: "Microsoft Corporation" },
+            { name: "Rajesh Jha", role: "EVP Experiences & Devices", company: "Microsoft Corporation" },
+            { name: "Scott Guthrie", role: "EVP Cloud & AI", company: "Microsoft Corporation" },
+
+            // Subsidiary leadership (dummy but realistic mapping)
+            { name: "Ryan Roslansky", role: "CEO", company: "LinkedIn Corporation" },
+            { name: "Nat Friedman", role: "Former CEO", company: "GitHub, Inc." },
+            { name: "Helen Chiang", role: "Head of Minecraft", company: "Mojang Studios" },
+            { name: "Phil Spencer", role: "CEO", company: "Xbox Game Studios" },
+
+            // Regional & legal leaders
+            { name: "Omar Abbosh", role: "President Industry Solutions", company: "Microsoft Ireland Operations Limited" },
+            { name: "Ahmed Mazhari", role: "President Asia", company: "Microsoft Asia" },
+            { name: "Ralph Haupter", role: "President EMEA", company: "Microsoft EMEA" }
+            ],
+            owners: [
+            
+            { name: "Vanguard Group", ownership: 8.10 },
+            { name: "BlackRock", ownership: 7.20 },
+            { name: "State Street Corporation", ownership: 4.00 },
+            { name: "Fidelity (FMR LLC)", ownership: 2.30 },
+            { name: "T. Rowe Price Associates", ownership: 1.90 },
+            { name: "Morgan Stanley Investment Mgmt", ownership: 1.10 },
+            { name: "Capital Group Companies", ownership: 2.50 },
+            { name: "Geode Capital Management", ownership: 1.00 }
+            ]
+        };
+
+        // State
+        let graphData = { ...defaultGraphData };
+        let ownershipChartInstance = null;
+
+        // Tab switching
+        function switchTab(tabName, button) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+        }
+
+        function rerenderAll() {
+            buildGraph();
+            populateSidebar();
+            updateAnalyticsUI();
+            setTimeout(createOwnershipChart, 50);
+        }
+
+        // Build graph
+        function buildGraph() {
+            if (window.currentNetwork) {
+                window.currentNetwork.destroy();
+            }
+
+            const nodes = new vis.DataSet();
+            const edges = new vis.DataSet();
+
+            graphData.subsidiaries.forEach((sub, idx) => {
+                if (sub.type === "parent") {
+                    nodes.add({
+                        id: `sub_${idx}`,
+                        label: sub.name,
+                        title: `${sub.name}\nJurisdiction: ${sub.jurisdiction}`,
+                        color: "#9c27b0",
+                        shape: "box",
+                        font: { size: 14, color: "white", weight: "bold" },
+                        margin: 15
+                    });
+                } else {
+                    nodes.add({
+                        id: `sub_${idx}`,
+                        label: sub.name,
+                        title: `${sub.name}\nJurisdiction: ${sub.jurisdiction}`,
+                        color: "#4db8c4",
+                        shape: "box",
+                        font: { size: 12, color: "white" }
+                    });
+                    edges.add({
+                        from: "sub_0",
+                        to: `sub_${idx}`,
+                        arrows: "to",
+                        color: { color: "#bbb" }
+                    });
+                }
+            });
+
+            graphData.directors.forEach((dir, idx) => {
+                nodes.add({
+                    id: `dir_${idx}`,
+                    label: dir.name,
+                    title: `${dir.name}\nRole: ${dir.role}`,
+                    color: "#ffc107",
+                    shape: "circle",
+                    font: { size: 11 }
+                });
+                edges.add({
+                    from: `dir_${idx}`,
+                    to: "sub_0",
+                    arrows: "to",
+                    label: "Director",
+                    color: { color: "#ffc107" }
+                });
+            });
+
+            graphData.owners.forEach((owner, idx) => {
+                nodes.add({
+                    id: `own_${idx}`,
+                    label: owner.name,
+                    title: `${owner.name}\nOwnership: ${owner.ownership}%`,
+                    color: "#ff6b6b",
+                    shape: "circle",
+                    font: { size: 11 }
+                });
+                edges.add({
+                    from: `own_${idx}`,
+                    to: "sub_0",
+                    arrows: "to",
+                    label: `${owner.ownership}%`,
+                    color: { color: "#ff6b6b" }
+                });
+            });
+
+            const container = document.getElementById("network");
+            const data = { nodes: nodes, edges: edges };
+            const options = {
+                physics: {
+                    enabled: true,
+                    stabilization: { iterations: 200 }
+                },
+                interaction: {
+                    hover: true,
+                    navigationButtons: true,
+                    keyboard: true
+                }
+            };
+
+            const network = new vis.Network(container, data, options);
+            window.currentNetwork = network;
+        }
+
+        // Populate sidebar
+        function populateSidebar() {
+            const subList = document.getElementById("subsidiaries-list");
+            subList.innerHTML = "";
+            graphData.subsidiaries.filter(s => s.type === "subsidiary").forEach(sub => {
+                const el = document.createElement("div");
+                el.className = "info-item subsidiary";
+                el.innerHTML = `<div class="info-item-name">${sub.name}</div><div class="info-item-detail">${sub.jurisdiction}</div>`;
+                subList.appendChild(el);
+            });
+
+            const dirList = document.getElementById("directors-list");
+            dirList.innerHTML = "";
+            graphData.directors.forEach(dir => {
+                const el = document.createElement("div");
+                el.className = "info-item director";
+                el.innerHTML = `<div class="info-item-name">${dir.name}</div><div class="info-item-detail">${dir.role}</div>`;
+                dirList.appendChild(el);
+            });
+
+            const ownList = document.getElementById("owners-list");
+            ownList.innerHTML = "";
+            graphData.owners.forEach(own => {
+                const el = document.createElement("div");
+                el.className = "info-item owner";
+                el.innerHTML = `<div class="info-item-name">${own.name}</div><div class="info-item-detail">${own.ownership}% ownership</div>`;
+                ownList.appendChild(el);
+            });
+        }
+
+        // Create ownership chart
+        function createOwnershipChart() {
+            const ctx = document.getElementById('ownershipChart');
+            if (ctx) {
+                if (ownershipChartInstance) {
+                    ownershipChartInstance.destroy();
+                }
+
+                const labels = graphData.owners.map(o => o.name);
+                const values = graphData.owners.map(o => o.ownership);
+                const otherPercent = Math.max(0, 100 - values.reduce((a, b) => a + b, 0));
+                labels.push("Other Shareholders");
+                values.push(otherPercent);
+
+                ownershipChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#e0e0e0'],
+                            borderColor: 'white',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { padding: 15, font: { size: 12 } }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function computeMetrics() {
+            const subs = graphData.subsidiaries || [];
+            const directors = graphData.directors || [];
+            const owners = graphData.owners || [];
+
+            const parent = subs.find(s => s.type === "parent");
+            const parentJurisdiction = parent?.jurisdiction || null;
+            const companyName = parent?.name || "Company";
+
+            const sortedOwners = [...owners].sort((a, b) => (b.ownership || 0) - (a.ownership || 0));
+            const top3 = sortedOwners.slice(0, 3);
+            const top3Sum = top3.reduce((a, o) => a + (o.ownership || 0), 0);
+            const totalHeld = owners.reduce((a, o) => a + (o.ownership || 0), 0);
+            const largest = sortedOwners[0] || { name: "N/A", ownership: 0 };
+
+            const countrySet = new Set();
+            subs.forEach(s => s.jurisdiction && countrySet.add(s.jurisdiction));
+            const countriesCount = countrySet.size;
+
+            const offshoreCount = subs.filter(s => {
+                if (!s.jurisdiction) return false;
+                if (!parentJurisdiction) return s.jurisdiction.toLowerCase() !== "us";
+                return s.jurisdiction !== parentJurisdiction;
+            }).length;
+
+            const complexityScoreRaw = Math.min(10, (subs.length / 5) + (countriesCount * 0.5));
+            const complexityScore = complexityScoreRaw.toFixed(1);
+
+            const geoByCountry = subs.reduce((acc, s) => {
+                if (!s.jurisdiction) return acc;
+                acc[s.jurisdiction] = acc[s.jurisdiction] || [];
+                acc[s.jurisdiction].push(s.name);
+                return acc;
+            }, {});
+
+            return {
+                companyName,
+                subsCount: subs.length,
+                directorsCount: directors.length,
+                ownersCount: owners.length,
+                top3Sum: top3Sum.toFixed(2),
+                largest,
+                totalHeld: totalHeld.toFixed(2),
+                countriesCount,
+                offshoreCount,
+                geoByCountry,
+                topOwnersShort: sortedOwners.slice(0, 2).map(o => `${o.name}`),
+                subsCountText: `${subs.length} subsidiaries`,
+                complexityScore,
+                topOwners: sortedOwners
+            };
+        }
+
+        function updateAnalyticsUI() {
+            const metrics = computeMetrics();
+
+            // Summary cards
+            const setText = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            };
+
+            setText("summary-subs", metrics.subsCount);
+            setText("summary-directors", metrics.directorsCount);
+            setText("summary-owners", metrics.ownersCount);
+            setText("summary-held", `${metrics.totalHeld}%`);
+
+            // Financial tab metrics
+            setText("metric-top3", `${metrics.top3Sum}%`);
+            setText("metric-top3-desc", "Calculated from current owners");
+            setText("metric-largest", `${metrics.largest.ownership || 0}%`);
+            setText("metric-largest-name", metrics.largest.name || "N/A");
+            setText("metric-countries", metrics.countriesCount);
+            setText("metric-countries-desc", "Jurisdictions across subsidiaries");
+            setText("metric-board-count", metrics.directorsCount);
+            setText("metric-subs-count", metrics.subsCount);
+            setText("metric-subs-desc", metrics.subsCountText);
+            setText("metric-offshore", metrics.offshoreCount);
+            setText("metric-offshore-desc", "Non-parent jurisdictions");
+            setText("metric-complexity", `${metrics.complexityScore}/10`);
+            setText("metric-complexity-desc", "Auto-estimated from entities/countries");
+
+            // Quick stats
+            setText("stat-top3", `${metrics.top3Sum}%`);
+            setText("stat-complexity", `${metrics.complexityScore}/10`);
+            setText("stat-countries", metrics.countriesCount);
+
+            // Top shareholders list
+            const topList = document.getElementById("top-shareholders-list");
+            if (topList) {
+                topList.innerHTML = metrics.topOwners.slice(0, 5).map(o => `<div>${o.name}: ${o.ownership || 0}%</div>`).join("") || "<div>No owners listed</div>";
+            }
+
+            // Geo presence list
+            const geoContainer = document.getElementById("geo-presence-list");
+            if (geoContainer) {
+                const entries = Object.entries(metrics.geoByCountry);
+                if (!entries.length) {
+                    geoContainer.innerHTML = "<div style='color:#666;'>No subsidiaries listed.</div>";
+                } else {
+                    geoContainer.innerHTML = entries.map(([country, names]) => {
+                        const sample = names.slice(0, 4).map(n => `• ${n}`).join("<br>");
+                        return `<div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #4a90e2;">
+                                    <div style="font-weight: 600; color: #1e3c72; margin-bottom: 8px;">${country} (${names.length})</div>
+                                    <div style="font-size: 0.9em; color: #666;">${sample}${names.length > 4 ? "<br>• …" : ""}</div>
+                                </div>`;
+                    }).join("");
+                }
+            }
+
+            // Recommendations
+            setText("rec-top-owners", metrics.topOwnersShort.join(", ") || "top holders");
+            setText("rec-largest-owner", `${metrics.largest.name || "N/A"} at ${metrics.largest.ownership || 0}%`);
+            setText("rec-country-count", metrics.countriesCount);
+            setText("rec-subs-count", metrics.subsCount);
+
+            // Export summary
+            setText("summary-company", metrics.companyName);
+            setText("summary-company-subs", metrics.subsCount);
+            setText("summary-company-directors", metrics.directorsCount);
+            setText("summary-company-owners", metrics.ownersCount);
+        }
+
+        // Load custom JSON and rerender UI (full file)
+        function loadCustomData(json) {
+            // Accepts any subset; keeps existing data for missing keys
+            if (!json || typeof json !== "object") {
+                alert("Invalid JSON format. Expected keys: subsidiaries, directors, owners (arrays).");
+                return;
+            }
+
+            let changed = false;
+
+            if (Array.isArray(json.subsidiaries)) {
+                graphData.subsidiaries = json.subsidiaries;
+                changed = true;
+            }
+            if (Array.isArray(json.directors)) {
+                graphData.directors = json.directors;
+                changed = true;
+            }
+            if (Array.isArray(json.owners)) {
+                graphData.owners = json.owners;
+                changed = true;
+            }
+
+            if (!changed) {
+                alert("Invalid JSON format. Expected keys: subsidiaries, directors, owners (arrays).");
+                return;
+            }
+
+            rerenderAll();
+        }
+
+        function setupFileLoader() {
+            const input = document.getElementById("data-file-input");
+            if (!input) return;
+            input.addEventListener("change", (event) => {
+                const file = event.target.files && event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        loadCustomData(json);
+                    } catch (err) {
+                        alert("Could not parse JSON: " + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        // Partial loaders
+        function setupPartialLoader(inputId, keyName) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            input.addEventListener("change", (event) => {
+                const file = event.target.files && event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        if (!Array.isArray(json)) {
+                            alert(`Invalid JSON: expected an array for ${keyName}.`);
+                            return;
+                        }
+                        graphData[keyName] = json;
+                        rerenderAll();
+                    } catch (err) {
+                        alert("Could not parse JSON: " + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        // Export functions
+        function exportJSON() {
+            const metrics = computeMetrics();
+            const dataStr = JSON.stringify({
+                generatedAt: new Date().toISOString(),
+                company: metrics.companyName,
+                ...graphData
+            }, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            const safeName = metrics.companyName.toLowerCase().replace(/[^a-z0-9]+/g, "_") || "company";
+            a.download = `${safeName}_corporate_analysis.json`;
+            a.click();
+        }
+
+        function exportPDF() {
+            alert("PDF export would generate a comprehensive investment analysis report with all charts, recommendations, and risk factors.");
+        }
+
+        function exportExcel() {
+            alert("Excel export would create a structured workbook with tabs for: Structure, Board, Shareholders, Financial Metrics, and Recommendations.");
+        }
+
+        function printReport() {
+            window.print();
+        }
+
+        function shareAnalysis() {
+            const url = window.location.href;
+            alert(`Share this analysis:\n\n${url}\n\nAlso available for download as PDF or Excel.`);
+        }
+
+        function downloadDemo() {
+            exportJSON();
+        }
+
+        function resetGraph() {
+            if (window.currentNetwork) {
+                window.currentNetwork.fit();
+            }
+        }
+
+        // Initialize
+        window.addEventListener("load", () => {
+            rerenderAll();
+            setupFileLoader();
+            setupPartialLoader("subsidiaries-file-input", "subsidiaries");
+            setupPartialLoader("directors-file-input", "directors");
+            setupPartialLoader("owners-file-input", "owners");
+        });
+    </script>
+</body>
+</html>
