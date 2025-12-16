@@ -4,8 +4,8 @@ PDF User Information Extraction using Open-Source LLMs
 This module extracts user name and designation from unstructured PDF documents
 using instruction-tuned Large Language Models.
 
-Author: Your Name
-GitHub: https://github.com/yourusername/pdf-user-extraction
+Author: Hariedh Raju
+GitHub: https://github.com/Hariedh/CORPORATE-HIERARCHY
 License: MIT
 """
 
